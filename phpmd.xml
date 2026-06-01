@@ -1,0 +1,50 @@
+<ruleset name="HCBMediaDefaultRules"
+         xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd"
+         xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd">
+
+    <description>
+        Project ruleset.
+    </description>
+
+    <exclude-pattern>_ide_helper.php</exclude-pattern>
+    <exclude-pattern>ModelCast.php</exclude-pattern>
+
+    <rule ref="rulesets/cleancode.xml">
+        <exclude name="StaticAccess" />
+        <exclude name="BooleanArgumentFlag" />
+        <exclude name="ElseExpression" />
+    </rule>
+
+    <rule ref="rulesets/controversial.xml"/>
+
+    <!-- Design  -->
+    <rule ref="rulesets/design.xml">
+        <exclude name="CouplingBetweenObjects" />
+        <exclude name="NumberOfChildren" />
+    </rule>
+
+    <!-- Naming  -->
+    <rule ref="rulesets/naming.xml">
+        <exclude name="LongVariable" />
+        <exclude name="ShortMethodName" />
+        <exclude name="LongClassName" />
+        <exclude name="ShortVariable" />
+    </rule>
+
+    <!-- Code size  -->
+    <rule ref="rulesets/codesize.xml">
+        <exclude name="CyclomaticComplexity" />
+        <exclude name="NPathComplexity" />
+        <exclude name="TooManyPublicMethods" />
+        <exclude name="ExcessiveMethodLength" />
+        <exclude name="ExcessiveParameterList" />
+        <exclude name="TooManyMethods" />
+    </rule>
+
+    <!-- Unused code  -->
+    <rule ref="rulesets/unusedcode.xml">
+        <exclude name="UnusedFormalParameter" />
+    </rule>
+</ruleset>

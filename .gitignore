@@ -1,0 +1,17 @@
+.DS_Store
+/node_modules
+/vendor
+.env
+.env.backup
+.phpunit.result.cache
+auth.json
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+.php-cs-fixer.cache
+src/.config
+src/.data
+docker-compose.override.yml
+AGENTS.md
+CLAUDE.md
