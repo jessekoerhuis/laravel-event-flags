@@ -1,0 +1,15 @@
+name: jessekoerhuis_laravel-event-flags
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+
+    working_dir: /app
+
+    volumes:
+      - ./:/app
+
+    stdin_open: true
+    tty: true
