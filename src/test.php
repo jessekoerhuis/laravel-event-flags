@@ -1,4 +1,5 @@
 <?php
 
-echo "Test";
+declare(strict_types=1);
 
+echo 'Test';

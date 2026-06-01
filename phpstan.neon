@@ -5,6 +5,10 @@ includes:
 parameters:
     level: 8
 
+    paths:
+        - src
+        - tests
+
     reportUnmatchedIgnoredErrors: false
 
     excludePaths:
