@@ -12,5 +12,6 @@ class FlaggableEvent
 
     public function __construct(public string $name = 'default')
     {
+        //
     }
 }
