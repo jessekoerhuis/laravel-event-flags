@@ -19,16 +19,32 @@ trait HasFlags
     /**
      * Apply flags to the current event instance.
      *
-     * @param array<int|string, mixed> $flags
+     * @param array<int|string, mixed>|string $flags
      */
-    public function withFlags(array $flags): static
+    public function withFlags(array|string $flags, string ...$additionalFlags): static
     {
         $clone = clone $this;
 
-        foreach ($flags as $key => $value) {
-            [$flag, $flagValue] = $clone->normalizeFlag($key, $value);
+        if (is_string($flags)) {
+            $clone->flags[$flags] = true;
 
-            $clone->flags[$flag] = $flagValue;
+            foreach ($additionalFlags as $additionalFlag) {
+                $clone->flags[$additionalFlag] = true;
+            }
+
+            return $clone;
+        }
+
+        foreach ($flags as $key => $value) {
+            if (is_int($key)) {
+                $clone->flags[self::normalizeImplicitFlag($value)] = true;
+
+                continue;
+            }
+
+            self::assertPrimitiveValue($key, $value);
+
+            $clone->flags[$key] = $value;
         }
 
         return $clone;
@@ -37,7 +53,7 @@ trait HasFlags
     /**
      * Get the flags on the current event instance.
      *
-     * @return array<string, bool|int|float|string|null>
+     * @return array<string, FlagValue>
      */
     public function getFlags(): array
     {
@@ -67,6 +83,7 @@ trait HasFlags
      * Statically dispatch an event with applicable flags.
      *
      * @param array<int|string, mixed> $flags
+     * @return array<int, mixed>|null
      */
     public static function dispatchWithFlags(array $flags, mixed ...$arguments): ?array
     {
@@ -80,32 +97,15 @@ trait HasFlags
      *
      * @throws InvalidFlagException
      */
-    private function assertPrimitiveValue(string $flag, mixed $value): void
+    private static function assertPrimitiveValue(string $flag, mixed $value): void
     {
         if (is_scalar($value) || $value === null) {
             return;
         }
 
-        $type = get_debug_type($value);
-
         throw new InvalidFlagException(
-            "Flag '{$flag}' must contain a primitive value. {$type} given.",
+            "Flag '{$flag}' must contain a primitive value. " . get_debug_type($value) . ' given.',
         );
-    }
-
-    /**
-     * If the flag key is a string, treat it as an explicit flag name and validate that the value is a primitive.
-     * If the flag key is numeric, treat the value as an implicit flag name and set its value to true.
-     */
-    private function normalizeFlag(string|int $key, mixed $value): array
-    {
-        if (is_int($key)) {
-            return [$this->normalizeImplicitFlag($value), true];
-        }
-
-        $this->assertPrimitiveValue($key, $value);
-
-        return [$key, $value];
     }
 
     /**
@@ -113,16 +113,18 @@ trait HasFlags
      *
      * @throws InvalidFlagException
      */
-    private function normalizeImplicitFlag(mixed $value): string
+    private static function normalizeImplicitFlag(mixed $value): string
     {
-        if (is_string($value) || is_int($value)) {
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
             return (string) $value;
         }
 
-        $type = get_debug_type($value);
-
         throw new InvalidFlagException(
-            "Numeric flag entries must contain a string or integer flag name, {$type} given.",
+            'Numeric flag entries must contain a string or integer flag name, ' . get_debug_type($value) . ' given.',
         );
     }
 }

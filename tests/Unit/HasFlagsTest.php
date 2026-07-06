@@ -1,0 +1,146 @@
+<?php
+
+declare(strict_types=1);
+
+use JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException;
+use JesseKoerhuis\EventFlags\Tests\Unit\Fixtures\FlaggableEvent;
+
+it('should return an empty array of flags by default', function (): void {
+    $event = new FlaggableEvent();
+
+    expect($event->getFlags())->toBe([]);
+});
+
+it('should return a new instance when applying flags', function (): void {
+    $event = new FlaggableEvent();
+    $flagged = $event->withFlags(['feature']);
+
+    expect($flagged)->not->toBe($event)
+        ->and($event->getFlags())->toBe([]);
+});
+
+it('should normalize implicit flags with numeric keys to true', function (): void {
+    $event = (new FlaggableEvent())->withFlags(['feature', 'beta']);
+
+    expect($event->getFlags())->toBe([
+        'feature' => true,
+        'beta' => true,
+    ]);
+});
+
+it('should cast integer implicit flag names to strings', function (): void {
+    $event = (new FlaggableEvent())->withFlags([42]);
+
+    expect($event->getFlags())->toBe(['42' => true]);
+});
+
+it('should preserve explicit flag values with string keys', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'bool' => true,
+        'int' => 5,
+        'float' => 1.5,
+        'string' => 'value',
+        'null' => null,
+    ]);
+
+    expect($event->getFlags())->toBe([
+        'bool' => true,
+        'int' => 5,
+        'float' => 1.5,
+        'string' => 'value',
+        'null' => null,
+    ]);
+});
+
+it('should merge implicit and explicit flags together', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'feature',
+        'level' => 3,
+    ]);
+
+    expect($event->getFlags())->toBe([
+        'feature' => true,
+        'level' => 3,
+    ]);
+});
+
+it('should overwrite previously applied flags with the same name', function (): void {
+    $event = (new FlaggableEvent())
+        ->withFlags(['level' => 1])
+        ->withFlags(['level' => 2]);
+
+    expect($event->getFlag('level'))->toBe(2);
+});
+
+it('should throw when an explicit flag receives a non-primitive value', function (): void {
+    (new FlaggableEvent())->withFlags(['payload' => new stdClass()]);
+})->throws(InvalidFlagException::class, "Flag 'payload' must contain a primitive value. stdClass given.");
+
+it('should throw when an explicit flag receives an array value', function (): void {
+    (new FlaggableEvent())->withFlags(['payload' => ['nested']]);
+})->throws(InvalidFlagException::class, "Flag 'payload' must contain a primitive value. array given.");
+
+it('should throw when an implicit flag name is not a string or integer', function (): void {
+    (new FlaggableEvent())->withFlags([true]);
+})->throws(
+    InvalidFlagException::class,
+    'Numeric flag entries must contain a string or integer flag name, bool given.',
+);
+
+it('should report a flag as enabled when its value is truthy', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'implicit',
+        'explicit' => true,
+        'numeric' => 1,
+        'string' => 'yes',
+    ]);
+
+    expect($event->isFlagEnabled('implicit'))->toBeTrue()
+        ->and($event->isFlagEnabled('explicit'))->toBeTrue()
+        ->and($event->isFlagEnabled('numeric'))->toBeTrue()
+        ->and($event->isFlagEnabled('string'))->toBeTrue();
+});
+
+it('should report a flag as disabled when its value is falsy or missing', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'off' => false,
+        'zero' => 0,
+        'empty' => '',
+        'null' => null,
+    ]);
+
+    expect($event->isFlagEnabled('off'))->toBeFalse()
+        ->and($event->isFlagEnabled('zero'))->toBeFalse()
+        ->and($event->isFlagEnabled('empty'))->toBeFalse()
+        ->and($event->isFlagEnabled('null'))->toBeFalse()
+        ->and($event->isFlagEnabled('missing'))->toBeFalse();
+});
+
+it('should return a flag value when present', function (): void {
+    $event = (new FlaggableEvent())->withFlags(['level' => 5]);
+
+    expect($event->getFlag('level'))->toBe(5);
+});
+
+it('should return the default value when a flag is missing', function (): void {
+    $event = new FlaggableEvent();
+
+    expect($event->getFlag('missing'))->toBeNull()
+        ->and($event->getFlag('missing', 'fallback'))->toBe('fallback');
+});
+
+it('should accept a single string flag name', function (): void {
+    $event = (new FlaggableEvent())->withFlags('feature');
+
+    expect($event->getFlags())->toBe(['feature' => true]);
+});
+
+it('should accept multiple string flag names as variadic arguments', function (): void {
+    $event = (new FlaggableEvent())->withFlags('feature', 'beta', 'experimental');
+
+    expect($event->getFlags())->toBe([
+        'feature' => true,
+        'beta' => true,
+        'experimental' => true,
+    ]);
+});
