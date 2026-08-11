@@ -17,6 +17,61 @@ trait HasFlags
     protected array $flags = [];
 
     /**
+     * Statically dispatch an event with applicable flags.
+     *
+     * @param array<int|string, mixed> $flags
+     * @return array<int, mixed>|null
+     */
+    public static function dispatchWithFlags(array $flags, mixed ...$arguments): ?array
+    {
+        $event = new static(...$arguments);
+
+        return event($event->withFlags($flags));
+    }
+
+    /**
+     * Assert a flag is set to exactly the given value.
+     *
+     * Returns false when the flag is not present. Uses strict comparison, so
+     * flags storing false, 0, 0.0, '', or null are matched correctly.
+     *
+     * @param FlagValue $value
+     */
+    public function flagEquals(string $flag, bool|int|float|string|null $value): bool
+    {
+        return array_key_exists($flag, $this->flags) && $this->flags[$flag] === $value;
+    }
+
+    /**
+     * Get a flag from the current event instance, else return a fallback value, which is null by default.
+     */
+    public function getFlag(string $flag, mixed $default = null): mixed
+    {
+        return $this->flags[$flag] ?? $default;
+    }
+
+    /**
+     * Get the flags on the current event instance.
+     *
+     * @return array<string, FlagValue>
+     */
+    public function getFlags(): array
+    {
+        return $this->flags;
+    }
+
+    /**
+     * Assert a flag is enabled on the current event instance.
+     *
+     * Implicit flags (numeric keys) will be treated as enabled when the flag name exists as a value.
+     * Explicit flags (string keys) will be treated as enabled when its value is of a primitive type and is "truthy".
+     */
+    public function isFlagEnabled(string $flag): bool
+    {
+        return (bool) ($this->flags[$flag] ?? false);
+    }
+
+    /**
      * Apply flags to the current event instance.
      *
      * @param array<int|string, mixed>|string $flags
@@ -48,48 +103,6 @@ trait HasFlags
         }
 
         return $clone;
-    }
-
-    /**
-     * Get the flags on the current event instance.
-     *
-     * @return array<string, FlagValue>
-     */
-    public function getFlags(): array
-    {
-        return $this->flags;
-    }
-
-    /**
-     * Assert a flag is enabled on the current event instance.
-     *
-     * Implicit flags (numeric keys) will be treated as enabled when the flag name exists as a value.
-     * Explicit flags (string keys) will be treated as enabled when its value is of a primitive type and is "truthy".
-     */
-    public function isFlagEnabled(string $flag): bool
-    {
-        return (bool) ($this->flags[$flag] ?? false);
-    }
-
-    /**
-     * Get a flag from the current event instance, else return a fallback value, which is null by default.
-     */
-    public function getFlag(string $flag, mixed $default = null): mixed
-    {
-        return $this->flags[$flag] ?? $default;
-    }
-
-    /**
-     * Statically dispatch an event with applicable flags.
-     *
-     * @param array<int|string, mixed> $flags
-     * @return array<int, mixed>|null
-     */
-    public static function dispatchWithFlags(array $flags, mixed ...$arguments): ?array
-    {
-        $event = new static(...$arguments);
-
-        return event($event->withFlags($flags));
     }
 
     /**

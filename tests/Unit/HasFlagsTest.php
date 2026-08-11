@@ -144,3 +144,55 @@ it('should accept multiple string flag names as variadic arguments', function ()
         'experimental' => true,
     ]);
 });
+
+it('should report a flag as equal when its value strictly matches the given value', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'implicit',
+        'level' => 5,
+        'ratio' => 1.5,
+        'source' => 'admin',
+        'enabled' => true,
+    ]);
+
+    expect($event->flagEquals('implicit', true))->toBeTrue()
+        ->and($event->flagEquals('level', 5))->toBeTrue()
+        ->and($event->flagEquals('ratio', 1.5))->toBeTrue()
+        ->and($event->flagEquals('source', 'admin'))->toBeTrue()
+        ->and($event->flagEquals('enabled', true))->toBeTrue();
+});
+
+it('should report a flag as equal when its value is a falsy scalar or null', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'off' => false,
+        'zero' => 0,
+        'zero-float' => 0.0,
+        'empty' => '',
+        'null' => null,
+    ]);
+
+    expect($event->flagEquals('off', false))->toBeTrue()
+        ->and($event->flagEquals('zero', 0))->toBeTrue()
+        ->and($event->flagEquals('zero-float', 0.0))->toBeTrue()
+        ->and($event->flagEquals('empty', ''))->toBeTrue()
+        ->and($event->flagEquals('null', null))->toBeTrue();
+});
+
+it('should not report a flag as equal when comparing loosely equivalent values', function (): void {
+    $event = (new FlaggableEvent())->withFlags([
+        'level' => 5,
+        'source' => 'admin',
+    ]);
+
+    expect($event->flagEquals('level', '5'))->toBeFalse()
+        ->and($event->flagEquals('level', 5.0))->toBeFalse()
+        ->and($event->flagEquals('source', 'ADMIN'))->toBeFalse();
+});
+
+it('should not report a missing flag as equal to any value', function (): void {
+    $event = new FlaggableEvent();
+
+    expect($event->flagEquals('missing', null))->toBeFalse()
+        ->and($event->flagEquals('missing', false))->toBeFalse()
+        ->and($event->flagEquals('missing', 0))->toBeFalse()
+        ->and($event->flagEquals('missing', ''))->toBeFalse();
+});

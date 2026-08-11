@@ -31,13 +31,6 @@
             "JesseKoerhuis\\EventFlags\\Tests\\": "tests/"
         }
     },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "JesseKoerhuis\\EventFlags\\EventFlagsServiceProvider"
-            ]
-        }
-    },
     "scripts": {
         "test": "pest",
         "stan": "phpstan analyse",
