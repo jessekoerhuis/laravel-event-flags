@@ -285,14 +285,14 @@ Enums give you refactor-safety and IDE autocompletion at every call site.
 
 All methods are provided by the `JesseKoerhuis\EventFlags\Traits\HasFlags` trait.
 
-| Method | Description |
-| --- | --- |
-| `withFlags(array\|string $flags, string ...$additionalFlags): static` | Returns a clone of the event with the given flags merged in. Accepts a single string, multiple string variadics, or an array of mixed implicit/explicit entries. |
-| `getFlags(): array<string, bool\|int\|float\|string\|null>` | Returns the full flag map. |
-| `getFlag(string $flag, mixed $default = null): mixed` | Returns the value stored for `$flag`, or `$default` if the flag is absent. |
-| `isFlagEnabled(string $flag): bool` | Returns `true` when the flag is present and its value is truthy. |
-| `flagEquals(string $flag, bool\|int\|float\|string\|null $value): bool` | Returns `true` when the flag is present and its value strictly equals (`===`) the given value. |
-| `static dispatchWithFlags(array $flags, mixed ...$arguments): ?array` | Constructs the event with `$arguments`, applies `$flags`, dispatches through `event()`, and returns the dispatcher's response. Requires the event to use Laravel's `Dispatchable` trait. |
+| Method                                                                  | Description                                                                                                                                                                              |
+|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `withFlags(array\|string $flags, string ...$additionalFlags): static`   | Returns a clone of the event with the given flags merged in. Accepts a single string, multiple string variadics, or an array of mixed implicit/explicit entries.                         |
+| `getFlags(): array<string, bool\|int\|float\|string\|null>`             | Returns the full flag map.                                                                                                                                                               |
+| `getFlag(string $flag, mixed $default = null): mixed`                   | Returns the value stored for `$flag`, or `$default` if the flag is absent.                                                                                                               |
+| `isFlagEnabled(string $flag): bool`                                     | Returns `true` when the flag is present and its value is truthy.                                                                                                                         |
+| `flagEquals(string $flag, bool\|int\|float\|string\|null $value): bool` | Returns `true` when the flag is present and its value strictly equals (`===`) the given value.                                                                                           |
+| `static dispatchWithFlags(array $flags, mixed ...$arguments): ?array`   | Constructs the event with `$arguments`, applies `$flags`, dispatches through `event()`, and returns the dispatcher's response. Requires the event to use Laravel's `Dispatchable` trait. |
 
 Attempting to store a non-scalar (and non-null) value for an explicit flag, or using a non-string/non-int implicit flag name, throws `JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException`.
 
