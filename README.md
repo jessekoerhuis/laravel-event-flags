@@ -17,12 +17,6 @@ A tiny, expressive utility package for attaching **flags** to Laravel events, so
     - [Reading Flags in a Listener](#reading-flags-in-a-listener)
     - [Dispatching With Flags](#dispatching-with-flags)
     - [Using Enums as Flags](#using-enums-as-flags)
-- [Real-World Examples](#real-world-examples)
-    - [1. Skipping Notifications During Data Imports](#1-skipping-notifications-during-data-imports)
-    - [2. Silencing Audit Logs for System Actions](#2-silencing-audit-logs-for-system-actions)
-    - [3. Forcing a Cache Warm-Up After a Model Update](#3-forcing-a-cache-warm-up-after-a-model-update)
-    - [4. Selective Webhook Dispatching](#4-selective-webhook-dispatching)
-    - [5. Test-Only Behavior Without Mocking Everything](#5-test-only-behavior-without-mocking-everything)
 - [Best Practices](#best-practices)
 - [API Reference](#api-reference)
 - [Testing](#testing)
@@ -89,7 +83,7 @@ composer require jessekoerhuis/laravel-event-flags
 **Requirements:**
 
 - PHP `^8.2`
-- Laravel `^11.0 || ^12.0`
+- Laravel `^11.0 || ^12.0 || ^13.0`
 
 ## Quick Start
 
