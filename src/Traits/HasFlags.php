@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseKoerhuis\EventFlags\Traits;
 
+use JesseKoerhuis\EventFlags\Exceptions\FlagNotAllowedException;
 use JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException;
 
 /**
@@ -15,6 +16,11 @@ trait HasFlags
      * @var array<string, FlagValue>
      */
     protected array $flags = [];
+
+    /**
+     * @var string[]
+     */
+    protected array $allowedFlags = ['*'];
 
     /**
      * Statically dispatch an event with applicable flags.
@@ -30,12 +36,29 @@ trait HasFlags
     }
 
     /**
+     * Asserts the flag being used is allowed. The '*' wildcard as default value means all flags are allowed.
+     *
+     * @throws FlagNotAllowedException
+     */
+    public function assertFlagAllowed(string $flag): void
+    {
+        $isAllowed = in_array('*', $this->allowedFlags, true)
+            || in_array($flag, $this->allowedFlags, true);
+
+        if ($isAllowed) {
+            return;
+        }
+
+        throw new FlagNotAllowedException(
+            "Flag '{$flag}' is not allowed on " . static::class . '.',
+        );
+    }
+
+    /**
      * Assert a flag is set to exactly the given value.
      *
      * Returns false when the flag is not present. Uses strict comparison, so
      * flags storing false, 0, 0.0, '', or null are matched correctly.
-     *
-     * @param FlagValue $value
      */
     public function flagEquals(string $flag, bool|int|float|string|null $value): bool
     {
@@ -81,9 +104,11 @@ trait HasFlags
         $clone = clone $this;
 
         if (is_string($flags)) {
+            $clone->assertFlagAllowed($flags);
             $clone->flags[$flags] = true;
 
             foreach ($additionalFlags as $additionalFlag) {
+                $clone->assertFlagAllowed($additionalFlag);
                 $clone->flags[$additionalFlag] = true;
             }
 
@@ -92,12 +117,15 @@ trait HasFlags
 
         foreach ($flags as $key => $value) {
             if (is_int($key)) {
-                $clone->flags[self::normalizeImplicitFlag($value)] = true;
+                $flag = self::normalizeImplicitFlag($value);
+                $clone->assertFlagAllowed($flag);
+                $clone->flags[$flag] = true;
 
                 continue;
             }
 
             self::assertPrimitiveValue($key, $value);
+            $clone->assertFlagAllowed($key);
 
             $clone->flags[$key] = $value;
         }

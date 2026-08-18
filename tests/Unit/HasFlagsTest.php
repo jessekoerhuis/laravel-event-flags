@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
+use JesseKoerhuis\EventFlags\Exceptions\FlagNotAllowedException;
 use JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException;
 use JesseKoerhuis\EventFlags\Tests\Unit\Fixtures\FlaggableEvent;
+use JesseKoerhuis\EventFlags\Tests\Unit\Fixtures\RestrictedFlaggableEvent;
 
 it('should return an empty array of flags by default', function (): void {
     $event = new FlaggableEvent();
@@ -72,15 +74,15 @@ it('should overwrite previously applied flags with the same name', function (): 
     expect($event->getFlag('level'))->toBe(2);
 });
 
-it('should throw when an explicit flag receives a non-primitive value', function (): void {
+it('should throw InvalidFlagException when an explicit flag receives a non-primitive value', function (): void {
     (new FlaggableEvent())->withFlags(['payload' => new stdClass()]);
 })->throws(InvalidFlagException::class, "Flag 'payload' must contain a primitive value. stdClass given.");
 
-it('should throw when an explicit flag receives an array value', function (): void {
+it('should throw InvalidFlagException when an explicit flag receives an array value', function (): void {
     (new FlaggableEvent())->withFlags(['payload' => ['nested']]);
 })->throws(InvalidFlagException::class, "Flag 'payload' must contain a primitive value. array given.");
 
-it('should throw when an implicit flag name is not a string or integer', function (): void {
+it('should throw InvalidFlagException when an implicit flag name is not a string or integer', function (): void {
     (new FlaggableEvent())->withFlags([true]);
 })->throws(
     InvalidFlagException::class,
@@ -195,4 +197,50 @@ it('should not report a missing flag as equal to any value', function (): void {
         ->and($event->flagEquals('missing', false))->toBeFalse()
         ->and($event->flagEquals('missing', 0))->toBeFalse()
         ->and($event->flagEquals('missing', ''))->toBeFalse();
+});
+
+it('should allow flags listed allowed', function (): void {
+    $event = (new RestrictedFlaggableEvent())->withFlags(['feature', 'level' => 3]);
+
+    expect($event->getFlags())->toBe([
+        'feature' => true,
+        'level' => 3,
+    ]);
+});
+
+it('should throw FlagNotAllowedException when an implicit flag is not allowed', function (): void {
+    (new RestrictedFlaggableEvent())->withFlags(['forbidden']);
+})->throws(
+    FlagNotAllowedException::class,
+    "Flag 'forbidden' is not allowed on " . RestrictedFlaggableEvent::class . '.',
+);
+
+it('should throw FlagNotAllowedException when an explicit flag is not allowed', function (): void {
+    (new RestrictedFlaggableEvent())->withFlags(['forbidden' => true]);
+})->throws(
+    FlagNotAllowedException::class,
+    "Flag 'forbidden' is not allowed on " . RestrictedFlaggableEvent::class . '.',
+);
+
+it('should throw FlagNotAllowedException when a single string flag is not allowed', function (): void {
+    (new RestrictedFlaggableEvent())->withFlags('forbidden');
+})->throws(
+    FlagNotAllowedException::class,
+    "Flag 'forbidden' is not allowed on " . RestrictedFlaggableEvent::class . '.',
+);
+
+it('should throw FlagNotAllowedException when a variadic string flag is not allowed', function (): void {
+    (new RestrictedFlaggableEvent())->withFlags('feature', 'forbidden');
+})->throws(
+    FlagNotAllowedException::class,
+    "Flag 'forbidden' is not allowed on " . RestrictedFlaggableEvent::class . '.',
+);
+
+it('should allow any flag when the allow list contains the wildcard', function (): void {
+    $event = (new FlaggableEvent())->withFlags(['anything', 'else' => 'value']);
+
+    expect($event->getFlags())->toBe([
+        'anything' => true,
+        'else' => 'value',
+    ]);
 });
