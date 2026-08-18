@@ -4,6 +4,8 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/jessekoerhuis/laravel-event-flags.svg?style=flat-square)](https://packagist.org/packages/jessekoerhuis/laravel-event-flags)
 [![License](https://img.shields.io/packagist/l/jessekoerhuis/laravel-event-flags.svg?style=flat-square)](LICENSE)
 
+![Laravel Event Flags](laravel-event-flags-banner.webp)
+
 A tiny, expressive utility package for attaching **flags** to Laravel events, so your listeners know *what to do* (or *not to do*) without polluting your event constructors with a growing list of boolean parameters.
 
 ## Table of Contents
@@ -16,6 +18,7 @@ A tiny, expressive utility package for attaching **flags** to Laravel events, so
     - [Implicit vs. Explicit Flags](#implicit-vs-explicit-flags)
     - [Reading Flags in a Listener](#reading-flags-in-a-listener)
     - [Dispatching With Flags](#dispatching-with-flags)
+    - [Restricting Allowed Flags](#restricting-allowed-flags)
     - [Using Enums as Flags](#using-enums-as-flags)
 - [Best Practices](#best-practices)
 - [API Reference](#api-reference)
@@ -244,6 +247,55 @@ OrderPlaced::dispatchWithFlags(
 
 The first argument is the flags array; the remaining arguments are forwarded to the event constructor. `dispatchWithFlags()` returns whatever the dispatcher returns (an array of listener responses, or `null`).
 
+### Restricting Allowed Flags
+
+By default, an event that uses `HasFlags` accepts any flag name — the trait's `$allowedFlags` property is seeded with a single wildcard entry, `'*'`. When you want an event to accept only a known set of flags, override `$allowedFlags` on the event and list the names you consider valid:
+
+```php
+namespace App\Events;
+
+use Illuminate\Foundation\Events\Dispatchable;
+use JesseKoerhuis\EventFlags\Traits\HasFlags;
+
+class OrderPlaced
+{
+    use Dispatchable;
+    use HasFlags;
+
+    protected array $allowedFlags = [
+        'skip-inventory-sync',
+        'silent',
+        'retry-attempt',
+        'triggered-by',
+    ];
+
+    public function __construct(public readonly Order $order) {}
+}
+```
+
+Because PHP forbids a class from redeclaring a trait property with a differing default, set the list in the constructor when your event doesn't already override the property:
+
+```php
+public function __construct(public readonly Order $order)
+{
+    $this->allowedFlags = ['skip-inventory-sync', 'silent'];
+}
+```
+
+Any call to `withFlags()` — including the array path used by `dispatchWithFlags()` — verifies every incoming flag against the allow-list. Passing a flag not on the list throws a `FlagNotAllowedException`:
+
+```php
+(new OrderPlaced($order))->withFlags('unknown-flag');
+```
+
+The check applies to implicit flags, explicit flags, the single-string form, and every variadic string. Keep `'*'` in the array to preserve wildcard behaviour, or omit it to enforce the allow-list strictly.
+
+You can also invoke the check directly — for example, from a custom builder or a manual dispatch path:
+
+```php
+$event->assertFlagAllowed('silent');
+```
+
 ### Using Enums as Flags
 
 Flag names must be strings or integers. Backed string enums work well as long as you access their `->value`:
@@ -274,6 +326,7 @@ Enums give you refactor-safety and IDE autocompletion at every call site.
 - **Keep flags optional.** A listener with no flag knowledge should still behave correctly by default. Flags are hints, not required inputs.
 - **Don't move data into flags.** Values are restricted to scalars for a reason — if a listener needs a customer ID or a rich object, put it on the event. Flags are for *directions*, not payload.
 - **Never chain flags after `dispatch()`.** `SomeEvent::dispatch(...)` fires the event before flags can be attached. Use `event((new SomeEvent(...))->withFlags(...))` or `SomeEvent::dispatchWithFlags([...], ...)` instead.
+- **Lock down flags on public events.** Override `$allowedFlags` on events that cross package or team boundaries so unknown flag names fail loudly instead of being silently ignored by listeners.
 
 ## API Reference
 
@@ -287,8 +340,9 @@ All methods are provided by the `JesseKoerhuis\EventFlags\Traits\HasFlags` trait
 | `isFlagEnabled(string $flag): bool`                                     | Returns `true` when the flag is present and its value is truthy.                                                                                                                         |
 | `flagEquals(string $flag, bool\|int\|float\|string\|null $value): bool` | Returns `true` when the flag is present and its value strictly equals (`===`) the given value.                                                                                           |
 | `static dispatchWithFlags(array $flags, mixed ...$arguments): ?array`   | Constructs the event with `$arguments`, applies `$flags`, dispatches through `event()`, and returns the dispatcher's response. Requires the event to use Laravel's `Dispatchable` trait. |
+| `assertFlagAllowed(string $flag): void`                                 | Throws `FlagNotAllowedException` when `$flag` is not in `$allowedFlags` and the list does not contain the `'*'` wildcard. Called automatically by `withFlags()` for every incoming flag. |
 
-Attempting to store a non-scalar (and non-null) value for an explicit flag, or using a non-string/non-int implicit flag name, throws `JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException`.
+Attempting to store a non-scalar (and non-null) value for an explicit flag, or using a non-string/non-int implicit flag name, throws `JesseKoerhuis\EventFlags\Exceptions\InvalidFlagException`. Passing a flag name that is not covered by the event's `$allowedFlags` list throws `JesseKoerhuis\EventFlags\Exceptions\FlagNotAllowedException`.
 
 ## Testing
 
@@ -311,3 +365,5 @@ Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ## License
 
 The MIT License (MIT). See [LICENSE](LICENSE) for details.
+
+![Laravel Event Flags Footer](laravel-event-flags-footer.webp)
