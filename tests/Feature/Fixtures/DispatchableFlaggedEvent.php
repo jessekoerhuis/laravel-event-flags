@@ -14,5 +14,6 @@ class DispatchableFlaggedEvent
 
     public function __construct(public string $name = 'default')
     {
+        //
     }
 }
