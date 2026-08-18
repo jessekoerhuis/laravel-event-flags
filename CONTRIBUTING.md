@@ -16,7 +16,7 @@ Contributions are **welcome** and will be fully **credited**. They are accepted 
 ## Running Tests
 
 ``` bash
-$ php artisan test
+$ composer test
 ```
 
 ## Running the Linter
