@@ -42,6 +42,10 @@ trait HasFlags
      */
     public function assertFlagAllowed(string $flag): void
     {
+        if (empty($flag)) {
+            throw new FlagNotAllowedException('Empty flag names are not allowed.');
+        }
+
         $isAllowed = in_array('*', $this->allowedFlags, true)
             || in_array($flag, $this->allowedFlags, true);
 
@@ -101,6 +105,10 @@ trait HasFlags
      */
     public function withFlags(array|string $flags, string ...$additionalFlags): static
     {
+        if (empty($flags) && empty($additionalFlags)) {
+            return $this;
+        }
+
         $clone = clone $this;
 
         if (is_string($flags)) {
