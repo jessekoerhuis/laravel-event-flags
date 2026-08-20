@@ -208,6 +208,13 @@ it('should allow flags listed allowed', function (): void {
     ]);
 });
 
+it('should throw FlagNotAllowedException when an empty string is passed', function (): void {
+    (new RestrictedFlaggableEvent())->withFlags(['']);
+})->throws(
+    FlagNotAllowedException::class,
+    'Empty flag names are not allowed.',
+);
+
 it('should throw FlagNotAllowedException when an implicit flag is not allowed', function (): void {
     (new RestrictedFlaggableEvent())->withFlags(['forbidden']);
 })->throws(
